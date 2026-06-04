@@ -1,93 +1,73 @@
-# icloud-sync-watch
+# iCloud Sync Watch
 
-See which file iCloud is uploading or downloading when Finder only shows a spinner.
+A native macOS menu bar app for watching live iCloud Drive sync activity.
 
-## Why
+The app listens to the macOS unified log through `/usr/bin/log stream`, parses iCloud file activity in native Swift code, persists the current timeline to JSONL, and shows the latest entries from a menu bar popover.
 
-On macOS, Finder can show iCloud syncing in the sidebar, but it does not tell you clearly which file is moving like in [this post](https://www.reddit.com/r/macapps/comments/1fg2diy/any_apps_that_can_tell_me_what_file_is_currently/).
+An older standalone Python CLI prototype is also preserved under `scripts/`. It is independent from the GUI app and usually does not need to be used unless you specifically want the original terminal prototype for debugging or parser research.
 
-<img width="1080" height="100" alt="image" src="https://github.com/user-attachments/assets/7a6d1da4-3398-4fe8-b77c-ce64420c8e99" />
+## What It Shows
 
-This script watches the system log and prints readable events such as:
+- Uploads
+- Downloads
+- File deletions
+- Directory creations
+- Directory deletions
+- File renames and moves
+- Directory renames and moves
 
-- `uploaded`
-- `downloaded`
-- `deleted`
-- `created-dir`
-- `deleted-dir`
-- `renamed`
-- `moved`
-- `renamed-dir`
-- `moved-dir`
+Each row shows:
 
-With `--verbose`, it also prints in-progress events like `uploading` and `downloading`.
+- action icon
+- file or folder name
+- spinner while the activity is still running
+- green check when the activity is complete
+
+The popover shows the latest 10 entries by default and can expand to show more.
+
+## Current Scope
+
+- Native macOS app only
+- Live monitoring only
+- No historical log playback
+- State is stored in `~/Library/Application Support/labs.mindive.iCloudSyncWatch/state.jsonl`
+
+If "Keep monitoring while hidden" is turned off, closing the popover pauses monitoring. When the popover is opened again, the timeline inserts a divider that shows how long monitoring was paused.
 
 ## Requirements
 
-- macOS
-- `python3`
-- `/usr/bin/log`
-- `GetFileInfo`
+- macOS 13 or later
+- Xcode command line tools or Xcode
 
-No external dependencies.
-No virtualenv.
-Python 3 only.
-
-## Usage
-
-Watch live activity:
+## Development
 
 ```bash
-python3 icloud_activity.py \
-  --volume-path ~/Library/Mobile\ Documents/com~apple~CloudDocs
+swift build
+swift test
 ```
 
-Verbose mode:
+## Package An Ad-Hoc Signed Universal App
 
 ```bash
-python3 icloud_activity.py \
-  --volume-path ~/Library/Mobile\ Documents/com~apple~CloudDocs \
-  --verbose
+make package VERSION=0.1.0
 ```
 
-Parse saved logs:
+This produces:
 
-```bash
-python3 icloud_activity.py /path/to/log.txt
-```
+- `dist/iCloud Sync Watch.app`
+- `dist/iCloud Sync Watch-0.1.0.zip`
 
-Parse from stdin:
+The `.app` bundle is ad-hoc signed with `codesign --sign -`.
 
-```bash
-log show --style compact --last 10m \
-  --predicate 'process == "fileproviderd" OR process == "com.apple.CloudDocs.iCloudDriveFileProvider"' \
-  | python3 icloud_activity.py --stdin --volume-path ~/Documents
-```
+## CI And Release
 
-## Sample Output
+- `.github/workflows/ci.yml` runs `swift test` on pull requests and pushes to `main`
+- `.github/workflows/release.yml` builds a universal ad-hoc signed app on tag pushes like `v0.1.0` and uploads the zip to the GitHub release
 
-```text
-uploaded /Users/you/Documents/demo.txt (fsize: 12)
-downloaded /Users/you/Library/Mobile Documents/com~apple~CloudDocs/ebooks/book.epub (fsize: 424318)
-deleted /Users/you/Documents/old.txt (fsize: 128)
-created-dir /Users/you/Documents/temp
-renamed-dir /Users/you/Documents/temp -> /Users/you/Documents/temp-2
-```
+No extra GitHub secrets are required for the current ad-hoc signing flow. `GITHUB_TOKEN` is enough for the release upload step.
 
-Verbose mode can also explain why a masked path could not be decoded:
+If you later want notarization, you will need Apple credentials such as:
 
-```text
-downloading /Users/you/Downloads/p{30}m.apk (fsize: 2388025; decode: dir-list-denied; why: materialization|itemChangedRemotely)
-downloaded /Users/you/Downloads/p{30}m.apk (fsize: 2388025; decode: dir-list-denied)
-```
-
-## Notes
-
-- `--volume-path` should be on the same volume as the files you want to resolve.
-- Live mode is usually more reliable than replaying old logs.
-- If a masked filename cannot be resolved, `--verbose` may show reasons like `dir-list-denied`, `ambiguous-match`, or `no-match`.
-- `{30}` style masks are matched by Unicode code point count, close to Go `rune` behavior.
-
-## Chinese README
-
-See [README.zh-CN.md](README.zh-CN.md).
+- `APPLE_ID`
+- `APPLE_TEAM_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`

@@ -1,91 +1,73 @@
-# icloud-sync-watch
+# iCloud Sync Watch
 
-当 Finder 左侧的 iCloud 一直转圈时，这个脚本可以直接告诉你：到底是哪个文件在上传或下载。
+一个原生 macOS 菜单栏应用，用来实时观察 iCloud Drive 的同步活动。
 
-## 解决的问题
+应用通过 `/usr/bin/log stream` 读取 macOS unified log，用原生 Swift 代码解析 iCloud 文件活动，把当前时间线持久化为 JSONL，再在菜单栏弹层里展示最近的条目。
 
-macOS 明明知道 iCloud 正在同步，但 Finder 往往只给你一个转圈图标，最多再给个大小和进度条，还是不知道具体是哪一个文件。
+仓库里还保留了 `scripts/` 目录中的独立 Python CLI 原型。它和当前 GUI app 是分开的；除非你有调试 parser 或研究早期原型的特殊需求，否则一般不需要使用。
 
-这个脚本会读取系统日志，把它整理成更容易读的事件，比如：
+## 当前支持
 
-- `uploaded`
-- `downloaded`
-- `deleted`
-- `created-dir`
-- `deleted-dir`
-- `renamed`
-- `moved`
-- `renamed-dir`
-- `moved-dir`
+- 上传
+- 下载
+- 文件删除
+- 目录创建
+- 目录删除
+- 文件重命名与移动
+- 目录重命名与移动
 
-加上 `--verbose` 后，还会显示 `uploading`、`downloading` 这类进行中的状态。
+每条记录会显示：
+
+- 动作图标
+- 文件或目录名
+- 进行中时显示 spinner
+- 完成后显示绿色对勾
+
+默认只显示最近 10 条，可以展开查看更多。
+
+## 当前范围
+
+- 仅支持原生 macOS app
+- 仅支持 live 监控
+- 不支持历史日志回放
+- 状态文件保存在 `~/Library/Application Support/labs.mindive.iCloudSyncWatch/state.jsonl`
+
+如果关闭“隐藏后保持监控”，弹层隐藏时会暂停监控；再次展开时，时间线会插入一条分割线，显示暂停了多久。
 
 ## 运行要求
 
-- macOS
-- `python3`
-- `/usr/bin/log`
-- `GetFileInfo`
+- macOS 13+
+- Xcode 或 Xcode Command Line Tools
 
-没有任何外部依赖。
-不需要虚拟环境。
-只支持 Python 3。
-
-## 用法
-
-直接看整个 iCloud Drive 的实时活动：
+## 开发
 
 ```bash
-python3 icloud_activity.py \
-  --volume-path ~/Library/Mobile\ Documents/com~apple~CloudDocs
+swift build
+swift test
 ```
 
-看更详细的输出：
+## 一键打包 Ad-Hoc Universal App
 
 ```bash
-python3 icloud_activity.py \
-  --volume-path ~/Library/Mobile\ Documents/com~apple~CloudDocs \
-  --verbose
+make package VERSION=0.1.0
 ```
 
-解析保存好的日志：
+产物：
 
-```bash
-python3 icloud_activity.py /path/to/log.txt
-```
+- `dist/iCloud Sync Watch.app`
+- `dist/iCloud Sync Watch-0.1.0.zip`
 
-从标准输入解析：
+`.app` 会使用 `codesign --sign -` 做 ad-hoc 签名。
 
-```bash
-log show --style compact --last 10m \
-  --predicate 'process == "fileproviderd" OR process == "com.apple.CloudDocs.iCloudDriveFileProvider"' \
-  | python3 icloud_activity.py --stdin --volume-path ~/Documents
-```
+## CI 与 Release
 
-## 输出示例
+- `.github/workflows/ci.yml` 会在 PR 和 push 到 `main` 时执行 `swift test`
+- `.github/workflows/release.yml` 会在推送 `v0.1.0` 这类 tag 时构建 universal ad-hoc 签名 app，并把 zip 上传到 GitHub Release
 
-```text
-uploaded /Users/you/Documents/demo.txt (fsize: 12)
-downloaded /Users/you/Library/Mobile Documents/com~apple~CloudDocs/ebooks/book.epub (fsize: 424318)
-deleted /Users/you/Documents/old.txt (fsize: 128)
-created-dir /Users/you/Documents/temp
-renamed-dir /Users/you/Documents/temp -> /Users/you/Documents/temp-2
-```
+当前这套 ad-hoc 签名发布流程不需要额外 GitHub secrets，使用默认的 `GITHUB_TOKEN` 就够了。
 
-如果路径没法完全还原，`--verbose` 会尽量说明原因：
+如果后面你要接 notarization，再额外准备这些 GitHub secrets：
 
-```text
-downloading /Users/you/Downloads/p{30}m.apk (fsize: 2388025; decode: dir-list-denied; why: materialization|itemChangedRemotely)
-downloaded /Users/you/Downloads/p{30}m.apk (fsize: 2388025; decode: dir-list-denied)
-```
-
-## 说明
-
-- `--volume-path` 最好指向和目标文件在同一个 volume 的路径。
-- live 模式通常比回放旧日志更可靠。
-- 如果脱敏路径没法还原，`--verbose` 里可能会看到 `dir-list-denied`、`ambiguous-match`、`no-match` 等原因。
-- `{30}` 这种写法按 Unicode code point 计数，接近 Go 里的 `rune`。
-
-## English README
-
-英文说明见 [README.md](README.md)。
+- `APPLE_ID`
+- `APPLE_TEAM_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`
