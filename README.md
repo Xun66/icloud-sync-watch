@@ -4,7 +4,9 @@ See which file iCloud is uploading or downloading when Finder only shows a spinn
 
 ## Why
 
-On macOS, Finder can show iCloud syncing in the sidebar, but often does not tell you clearly which file is moving.
+On macOS, Finder can show iCloud syncing in the sidebar, but it does not tell you clearly which file is moving like in [this post](https://www.reddit.com/r/macapps/comments/1fg2diy/any_apps_that_can_tell_me_what_file_is_currently/).
+
+<img width="1080" height="100" alt="image" src="https://github.com/user-attachments/assets/7a6d1da4-3398-4fe8-b77c-ce64420c8e99" />
 
 This script watches the system log and prints readable events such as:
 
