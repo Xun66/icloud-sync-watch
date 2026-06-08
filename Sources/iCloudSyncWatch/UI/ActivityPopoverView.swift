@@ -32,23 +32,27 @@ struct ActivityPopoverView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(AppPaths.appName)
                     .font(.system(size: 15, weight: .semibold))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 Text(store.keepMonitoringWhileHidden ? L10n.tr("header.watchEnabled") : L10n.tr("header.watchDisabled"))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
 
-            Button(L10n.tr("button.clear")) {
-                expandedEntryID = nil
-                store.clearEntries()
+            HStack(spacing: 6) {
+                Button(L10n.tr("button.clear")) {
+                    expandedEntryID = nil
+                    store.clearEntries()
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.secondary)
+
+                settingsMenu
             }
-            .buttonStyle(.plain)
-            .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(.secondary)
-            .padding(.top, 2)
-
-            settingsMenu
-                .padding(.top, 1)
+            .fixedSize()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)

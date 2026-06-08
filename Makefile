@@ -50,7 +50,7 @@ package: test build build-icon
 	/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" "$(APP_DIR)/Contents/Info.plist"
 	/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(VERSION)" "$(APP_DIR)/Contents/Info.plist"
 	lipo -create "$(ARM64_BIN)" "$(X86_64_BIN)" -output "$(APP_DIR)/Contents/MacOS/$(EXECUTABLE_NAME)"
-	cp -R "$(RESOURCE_BUNDLE)" "$(APP_DIR)/$(EXECUTABLE_NAME)_$(EXECUTABLE_NAME).bundle"
+	cp -R "$(RESOURCE_BUNDLE)" "$(APP_DIR)/Contents/Resources/$(EXECUTABLE_NAME)_$(EXECUTABLE_NAME).bundle"
 	chmod +x "$(APP_DIR)/Contents/MacOS/$(EXECUTABLE_NAME)"
 	codesign --force --sign - --timestamp=none "$(APP_DIR)"
 	ditto -c -k --keepParent "$(APP_DIR)" "$(ZIP_PATH)"
