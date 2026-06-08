@@ -19,7 +19,8 @@ struct ActivityEntry: Identifiable, Codable {
     var secondaryPath: String?
     var fileSize: Int?
     var decodeReason: String?
-    var triggerReason: String?
+    var triggerDiffs: [String]
+    var triggerWhy: [String]
     var startedAt: Date
     var finishedAt: Date?
     var durationSeconds: TimeInterval?

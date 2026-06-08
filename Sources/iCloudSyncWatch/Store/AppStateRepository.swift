@@ -25,13 +25,22 @@ struct AppStateRepository {
         let content = try String(contentsOf: fileURL, encoding: .utf8)
         var snapshot = AppSnapshot.default
 
-        for rawLine in content.split(whereSeparator: \.isNewline) {
+        for (index, rawLine) in content.split(whereSeparator: \.isNewline).enumerated() {
             guard !rawLine.isEmpty else {
                 continue
             }
 
             let lineData = Data(rawLine.utf8)
-            let record = try decoder.decode(AppStateLogRecord.self, from: lineData)
+            let record: AppStateLogRecord
+            do {
+                record = try decoder.decode(AppStateLogRecord.self, from: lineData)
+            } catch {
+                throw AppStateRepositoryError.invalidRecord(
+                    fileURL: fileURL,
+                    lineNumber: index + 1,
+                    underlyingError: error
+                )
+            }
             apply(record, to: &snapshot)
         }
 
@@ -116,6 +125,43 @@ struct AppStateRepository {
             snapshot.entries.removeAll { $0.id == pause.id }
             snapshot.entries.insert(.pause(pause), at: 0)
         }
+    }
+}
+
+private enum AppStateRepositoryError: LocalizedError {
+    case invalidRecord(fileURL: URL, lineNumber: Int, underlyingError: Error)
+
+    var errorDescription: String? {
+        switch self {
+        case let .invalidRecord(fileURL, lineNumber, underlyingError):
+            return "State file at \(fileURL.path) is incompatible on line \(lineNumber): \(Self.describe(underlyingError)). Delete it or repair it with an external migration/reset script."
+        }
+    }
+
+    private static func describe(_ error: Error) -> String {
+        if let decodingError = error as? DecodingError {
+            switch decodingError {
+            case let .keyNotFound(key, context):
+                return "missing key `\(key.stringValue)` at \(codingPathDescription(context.codingPath))"
+            case let .typeMismatch(type, context):
+                return "type mismatch for `\(type)` at \(codingPathDescription(context.codingPath))"
+            case let .valueNotFound(type, context):
+                return "missing value for `\(type)` at \(codingPathDescription(context.codingPath))"
+            case let .dataCorrupted(context):
+                return "data corrupted at \(codingPathDescription(context.codingPath)): \(context.debugDescription)"
+            @unknown default:
+                return error.localizedDescription
+            }
+        }
+
+        return error.localizedDescription
+    }
+
+    private static func codingPathDescription(_ codingPath: [CodingKey]) -> String {
+        guard !codingPath.isEmpty else {
+            return "<root>"
+        }
+        return codingPath.map(\.stringValue).joined(separator: ".")
     }
 }
 

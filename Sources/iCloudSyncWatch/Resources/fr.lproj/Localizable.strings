@@ -5,6 +5,7 @@
 "empty.monitoring.enabled" = "La surveillance en arrière-plan est activée";
 "empty.monitoring.disabled" = "La surveillance démarre à l'ouverture du panneau";
 "record.view" = "Afficher le fichier journal";
+"button.clear" = "Effacer";
 "menu.keepMonitoring" = "Continuer la surveillance une fois masqué";
 "menu.help" = "Aide";
 "menu.help.incomplete" = "Pourquoi la liste des changements est-elle incomplète ?";
@@ -12,8 +13,13 @@
 "menu.feedback" = "Envoyer un retour";
 "menu.about" = "À propos";
 "menu.quit" = "Quitter";
+"menu.copyFullPath" = "Copier le chemin complet";
 "tooltip.decodeFailure" = "Échec du démasquage : %@";
 "detail.duration" = "Durée %@";
+"detail.operationLabel" = "Opération :";
+"detail.diffsLabel" = "Diffs :";
+"detail.whyLabel" = "Why :";
+"detail.tokenSeparator" = " | ";
 "detail.triggerReasonLabel" = "Cause du changement :";
 "detail.unknownChange" = "Détails du changement --";
 "monitor.paused" = "Surveillance suspendue pendant %@";
@@ -31,6 +37,12 @@
 "error.launchFailedText" = "Échec du lancement d’iCloud Sync Watch : %@";
 "error.saveState" = "Échec de l'enregistrement du fichier d'état : %@";
 "error.createLogFile" = "Échec de la création du fichier journal : %@";
+"error.invalidStateFile" = "Le fichier d'état %@ est incompatible à la ligne %d : %@. Supprimez-le ou réparez-le avec un script externe de migration/réinitialisation.";
+"error.logStreamExited" = "`log stream` s'est arrêté de façon inattendue avec le code %d";
+"error.logStreamExitedWithDetail" = "`log stream` s'est arrêté de façon inattendue avec le code %d : %@";
+"error.logStreamPermissionDenied" = "`log stream` s'est arrêté avec le code 77. macOS a refusé l'accès au journal unifié. Accordez l'Accès complet au disque puis réessayez.";
+"error.logStreamPermissionDeniedWithDetail" = "`log stream` s'est arrêté avec le code 77. macOS a refusé l'accès au journal unifié : %@";
+"error.logStreamStartFailed" = "Impossible de démarrer `/usr/bin/log stream` : %@";
 "action.upload" = "Téléverser";
 "action.download" = "Télécharger";
 "action.deleteFile" = "Supprimer le fichier";

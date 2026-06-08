@@ -13,6 +13,7 @@
 
 - `icloud_activity.py`
 - `activity_parser.py`
+- `reset_state.py`
 
 ## 运行要求
 
@@ -39,3 +40,13 @@ log show --style compact --last 10m \
 ```
 
 这个脚本项目是独立保存的；除非你有调试或研究 parser 的特殊需求，否则无需使用。
+
+## 重置 GUI 状态文件
+
+如果 GUI 应用因为状态文件 schema 变化而无法启动，可以先把旧状态文件备份移走：
+
+```bash
+python3 scripts/reset_state.py
+```
+
+它会把 `~/Library/Application Support/io.github.xun66.iCloudSyncWatch/state.jsonl` 移动为带时间戳的 `.bak` 文件。

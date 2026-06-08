@@ -64,6 +64,56 @@ struct ActivityStoreTests {
         #expect(pauseEntries.count == 1)
         #expect(pauseEntries[0].duration > 0.01)
     }
+
+    @Test
+    func doesNotShowErrorWhenStoppingMonitoring() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let repository = AppStateRepository(fileURL: directory.appendingPathComponent("state.jsonl"))
+        try repository.compact(with: AppSnapshot(keepMonitoringWhileHidden: false, entries: []))
+
+        let monitor = FakeMonitor()
+        let store = try ActivityStore(repository: repository, monitor: monitor)
+
+        store.setInterfaceVisible(true)
+        monitor.onFailure?("should not appear for a normal stop")
+        store.dismissError()
+        store.setInterfaceVisible(false)
+
+        #expect(store.lastErrorMessage == nil)
+    }
+
+    @Test
+    func clearEntriesRemovesVisibleEntries() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let repository = AppStateRepository(fileURL: directory.appendingPathComponent("state.jsonl"))
+
+        let entry = ActivityEntry(
+            id: UUID(),
+            correlationKey: "upload|/tmp/a",
+            action: .upload,
+            status: .completed,
+            primaryPath: "/tmp/a",
+            secondaryPath: nil,
+            fileSize: 12,
+            decodeReason: nil,
+            triggerDiffs: ["content"],
+            triggerWhy: ["itemChangedRemotely"],
+            startedAt: .now,
+            finishedAt: .now,
+            durationSeconds: 0.5,
+            lastUpdatedAt: .now
+        )
+        try repository.compact(with: AppSnapshot(keepMonitoringWhileHidden: false, entries: [.activity(entry)]))
+
+        let monitor = FakeMonitor()
+        let store = try ActivityStore(repository: repository, monitor: monitor)
+
+        #expect(store.visibleEntries.count == 1)
+        store.clearEntries()
+        #expect(store.visibleEntries.isEmpty)
+    }
 }
 
 private final class FakeMonitor: LogStreamControlling {

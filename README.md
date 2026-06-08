@@ -30,7 +30,7 @@ The popover shows the latest 10 entries by default and can expand to show more.
 - Native macOS app only
 - Live monitoring only
 - No historical log playback
-- State is stored in `~/Library/Application Support/labs.mindive.iCloudSyncWatch/state.jsonl`
+- State is stored in `~/Library/Application Support/io.github.xun66.iCloudSyncWatch/state.jsonl`
 
 If "Keep monitoring while hidden" is turned off, closing the popover pauses monitoring. When the popover is opened again, the timeline inserts a divider that shows how long monitoring was paused.
 

@@ -12,7 +12,8 @@ struct ParsedSyncEvent: Sendable {
     let secondaryPath: String?
     let fileSize: Int?
     let decodeReason: String?
-    let triggerReason: String?
+    let triggerDiffs: [String]
+    let triggerWhy: [String]
     let timestamp: Date
 
     var correlationKey: String {

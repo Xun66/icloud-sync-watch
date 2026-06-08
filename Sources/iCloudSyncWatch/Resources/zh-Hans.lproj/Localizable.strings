@@ -5,6 +5,7 @@
 "empty.monitoring.enabled" = "后台监控已开启";
 "empty.monitoring.disabled" = "展开菜单后会开始监控";
 "record.view" = "查看记录文件";
+"button.clear" = "清空";
 "menu.keepMonitoring" = "隐藏后保持监控";
 "menu.help" = "帮助";
 "menu.help.incomplete" = "为什么变动列表不完整？";
@@ -12,8 +13,13 @@
 "menu.feedback" = "问题反馈";
 "menu.about" = "关于";
 "menu.quit" = "退出";
+"menu.copyFullPath" = "复制完整路径";
 "tooltip.decodeFailure" = "去脱敏失败：%@";
 "detail.duration" = "耗时 %@";
+"detail.operationLabel" = "操作：";
+"detail.diffsLabel" = "Diffs：";
+"detail.whyLabel" = "Why：";
+"detail.tokenSeparator" = " | ";
 "detail.triggerReasonLabel" = "触发原因：";
 "detail.unknownChange" = "内容变化 --";
 "monitor.paused" = "监控暂停 %@";
@@ -31,6 +37,12 @@
 "error.launchFailedText" = "iCloud Sync Watch 启动失败：%@";
 "error.saveState" = "保存状态文件失败：%@";
 "error.createLogFile" = "创建记录文件失败：%@";
+"error.invalidStateFile" = "状态文件 %@ 在第 %d 行与当前版本不兼容：%@。请删除它，或用外部迁移/重置脚本修复。";
+"error.logStreamExited" = "`log stream` 异常退出，退出码 %d";
+"error.logStreamExitedWithDetail" = "`log stream` 异常退出，退出码 %d：%@";
+"error.logStreamPermissionDenied" = "`log stream` 以退出码 77 结束。macOS 拒绝了 unified log 访问权限。请授予“完全磁盘访问权限”后重试。";
+"error.logStreamPermissionDeniedWithDetail" = "`log stream` 以退出码 77 结束。macOS 拒绝了 unified log 访问权限：%@";
+"error.logStreamStartFailed" = "启动 `/usr/bin/log stream` 失败：%@";
 "action.upload" = "上传";
 "action.download" = "下载";
 "action.deleteFile" = "删除文件";

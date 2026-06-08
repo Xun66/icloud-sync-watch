@@ -90,6 +90,17 @@ final class ActivityStore: ObservableObject {
         repository.fileURL
     }
 
+    func revealEntryInFinder(path: String) {
+        let target = FinderRevealTarget.resolve(path: path)
+
+        switch target {
+        case let .select(url):
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        case let .openDirectory(url):
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     func revealSnapshotFileInFinder() {
         do {
             if !FileManager.default.fileExists(atPath: repository.fileURL.path) {
@@ -100,6 +111,13 @@ final class ActivityStore: ObservableObject {
         } catch {
             lastErrorMessage = L10n.tr("error.createLogFile", error.localizedDescription)
         }
+    }
+
+    func clearEntries() {
+        snapshot.entries.removeAll()
+        openEntryIDsByKey.removeAll()
+        compactSnapshot()
+        updateStatusItemBadgeState()
     }
 
     private func resumeMonitoringIfNeeded() {
@@ -135,7 +153,12 @@ final class ActivityStore: ObservableObject {
             activity.status = .running
             activity.fileSize = event.fileSize ?? activity.fileSize
             activity.decodeReason = event.decodeReason ?? activity.decodeReason
-            activity.triggerReason = event.triggerReason ?? activity.triggerReason
+            if !event.triggerDiffs.isEmpty {
+                activity.triggerDiffs = event.triggerDiffs
+            }
+            if !event.triggerWhy.isEmpty {
+                activity.triggerWhy = event.triggerWhy
+            }
             activity.lastUpdatedAt = event.timestamp
             snapshot.entries[index] = .activity(activity)
             persistUpdatedActivity(activity)
@@ -151,7 +174,8 @@ final class ActivityStore: ObservableObject {
             secondaryPath: event.secondaryPath,
             fileSize: event.fileSize,
             decodeReason: event.decodeReason,
-            triggerReason: event.triggerReason,
+            triggerDiffs: event.triggerDiffs,
+            triggerWhy: event.triggerWhy,
             startedAt: event.timestamp,
             finishedAt: nil,
             durationSeconds: nil,
@@ -171,7 +195,12 @@ final class ActivityStore: ObservableObject {
             activity.secondaryPath = event.secondaryPath ?? activity.secondaryPath
             activity.fileSize = event.fileSize ?? activity.fileSize
             activity.decodeReason = event.decodeReason ?? activity.decodeReason
-            activity.triggerReason = event.triggerReason ?? activity.triggerReason
+            if !event.triggerDiffs.isEmpty {
+                activity.triggerDiffs = event.triggerDiffs
+            }
+            if !event.triggerWhy.isEmpty {
+                activity.triggerWhy = event.triggerWhy
+            }
             activity.finishedAt = event.timestamp
             activity.durationSeconds = event.timestamp.timeIntervalSince(activity.startedAt)
             activity.lastUpdatedAt = event.timestamp
@@ -189,7 +218,8 @@ final class ActivityStore: ObservableObject {
             secondaryPath: event.secondaryPath,
             fileSize: event.fileSize,
             decodeReason: event.decodeReason,
-            triggerReason: event.triggerReason,
+            triggerDiffs: event.triggerDiffs,
+            triggerWhy: event.triggerWhy,
             startedAt: event.timestamp,
             finishedAt: event.timestamp,
             durationSeconds: nil,

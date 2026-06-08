@@ -11,12 +11,15 @@ final class UnifiedLogStreamService: @unchecked Sendable, LogStreamControlling {
     var onEvents: (([ParsedSyncEvent]) -> Void)?
     var onFailure: ((String) -> Void)?
 
-    private let parserQueue = DispatchQueue(label: "labs.mindive.icloudsyncwatch.parser")
-    private let processQueue = DispatchQueue(label: "labs.mindive.icloudsyncwatch.process")
+    private let parserQueue = DispatchQueue(label: "io.github.xun66.icloudsyncwatch.parser")
+    private let processQueue = DispatchQueue(label: "io.github.xun66.icloudsyncwatch.process")
     private let parser: LiveLogParser
     private var process: Process?
     private var outputPipe: Pipe?
+    private var errorPipe: Pipe?
     private var bufferedText = ""
+    private var errorOutput = Data()
+    private var isStoppingProcess = false
 
     init(parser: LiveLogParser) {
         self.parser = parser
@@ -41,8 +44,10 @@ final class UnifiedLogStreamService: @unchecked Sendable, LogStreamControlling {
             ]
 
             let outputPipe = Pipe()
+            let errorPipe = Pipe()
             process.standardOutput = outputPipe
-            process.standardError = Pipe()
+            process.standardError = errorPipe
+            self.errorOutput = Data()
 
             outputPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
                 guard let self else {
@@ -55,17 +60,39 @@ final class UnifiedLogStreamService: @unchecked Sendable, LogStreamControlling {
                 self.consume(data: data)
             }
 
+            errorPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
+                guard let self else {
+                    return
+                }
+                let data = handle.availableData
+                guard !data.isEmpty else {
+                    return
+                }
+                self.processQueue.async {
+                    self.errorOutput.append(data)
+                }
+            }
+
             process.terminationHandler = { [weak self] process in
                 guard let self else {
                     return
                 }
                 self.processQueue.async {
+                    let wasStoppingProcess = self.isStoppingProcess
                     self.outputPipe?.fileHandleForReading.readabilityHandler = nil
+                    self.errorPipe?.fileHandleForReading.readabilityHandler = nil
+                    let errorMessage = Self.failureMessage(
+                        terminationStatus: process.terminationStatus,
+                        stderr: self.errorOutput
+                    )
                     self.process = nil
                     self.outputPipe = nil
-                    if process.terminationStatus != 0, process.terminationReason != .exit {
+                    self.errorPipe = nil
+                    self.errorOutput = Data()
+                    self.isStoppingProcess = false
+                    if !wasStoppingProcess, process.terminationStatus != 0 {
                         Task { @MainActor in
-                            self.onFailure?("`log stream` 异常退出，退出码 \(process.terminationStatus)")
+                            self.onFailure?(errorMessage)
                         }
                     }
                 }
@@ -75,10 +102,12 @@ final class UnifiedLogStreamService: @unchecked Sendable, LogStreamControlling {
                 try process.run()
                 self.process = process
                 self.outputPipe = outputPipe
+                self.errorPipe = errorPipe
             } catch {
                 outputPipe.fileHandleForReading.readabilityHandler = nil
+                errorPipe.fileHandleForReading.readabilityHandler = nil
                 Task { @MainActor in
-                    self.onFailure?("无法启动 `/usr/bin/log stream`: \(error.localizedDescription)")
+                    self.onFailure?(L10n.tr("error.logStreamStartFailed", error.localizedDescription))
                 }
             }
         }
@@ -89,11 +118,15 @@ final class UnifiedLogStreamService: @unchecked Sendable, LogStreamControlling {
             guard let process = self.process else {
                 return
             }
+            self.isStoppingProcess = true
             self.outputPipe?.fileHandleForReading.readabilityHandler = nil
+            self.errorPipe?.fileHandleForReading.readabilityHandler = nil
             process.terminate()
             self.process = nil
             self.outputPipe = nil
+            self.errorPipe = nil
             self.bufferedText = ""
+            self.errorOutput = Data()
         }
     }
 
@@ -118,5 +151,23 @@ final class UnifiedLogStreamService: @unchecked Sendable, LogStreamControlling {
                 }
             }
         }
+    }
+
+    private static func failureMessage(terminationStatus: Int32, stderr: Data) -> String {
+        let trimmedStderr = String(data: stderr, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if terminationStatus == 77 {
+            if let trimmedStderr, !trimmedStderr.isEmpty {
+                return L10n.tr("error.logStreamPermissionDeniedWithDetail", trimmedStderr)
+            }
+            return L10n.tr("error.logStreamPermissionDenied")
+        }
+
+        if let trimmedStderr, !trimmedStderr.isEmpty {
+            return L10n.tr("error.logStreamExitedWithDetail", terminationStatus, trimmedStderr)
+        }
+
+        return L10n.tr("error.logStreamExited", terminationStatus)
     }
 }

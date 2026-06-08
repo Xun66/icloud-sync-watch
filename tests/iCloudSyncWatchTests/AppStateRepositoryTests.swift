@@ -18,7 +18,8 @@ struct AppStateRepositoryTests {
             secondaryPath: nil,
             fileSize: 10,
             decodeReason: nil,
-            triggerReason: "itemChangedRemotely",
+            triggerDiffs: [],
+            triggerWhy: ["itemChangedRemotely"],
             startedAt: .now,
             finishedAt: nil,
             durationSeconds: nil,
@@ -39,7 +40,8 @@ struct AppStateRepositoryTests {
             secondaryPath: nil,
             fileSize: 20,
             decodeReason: nil,
-            triggerReason: "content|mtime",
+            triggerDiffs: ["content", "mtime"],
+            triggerWhy: [],
             startedAt: .now,
             finishedAt: nil,
             durationSeconds: nil,
@@ -59,5 +61,28 @@ struct AppStateRepositoryTests {
         #expect(loaded.entries[1].activity?.id == first.id)
         #expect(loaded.entries[1].activity?.status == .completed)
         #expect(loaded.entries[1].activity?.durationSeconds == 1.5)
+    }
+
+    @Test
+    func reportsIncompatibleStateFileWithPathAndLineNumber() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let fileURL = directory.appendingPathComponent("state.jsonl")
+        let repository = AppStateRepository(fileURL: fileURL)
+
+        let legacyLine = """
+        {"kind":"insertActivity","snapshot":null,"keepMonitoringWhileHidden":null,"activity":{"id":"00000000-0000-0000-0000-000000000001","correlationKey":"upload|/tmp/a","action":"upload","status":"running","primaryPath":"/tmp/a","secondaryPath":null,"fileSize":12,"decodeReason":null,"triggerReason":"content|mtime","startedAt":"2026-06-08T12:00:00Z","finishedAt":null,"durationSeconds":null,"lastUpdatedAt":"2026-06-08T12:00:00Z"},"pause":null}
+        """
+        try legacyLine.write(to: fileURL, atomically: true, encoding: .utf8)
+
+        do {
+            _ = try repository.load()
+            Issue.record("expected incompatible state file error")
+        } catch {
+            let message = error.localizedDescription
+            #expect(message.contains(fileURL.path))
+            #expect(message.contains("line 1"))
+            #expect(message.contains("triggerDiffs"))
+        }
     }
 }

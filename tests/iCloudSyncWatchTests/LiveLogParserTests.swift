@@ -27,7 +27,8 @@ struct LiveLogParserTests {
         #expect(events[0].primaryPath == target)
         #expect(events[1].phase == .completed)
         #expect(events[1].fileSize == 363)
-        #expect(events[0].triggerReason == "itemChangedRemotely|contentUpdate")
+        #expect(events[0].triggerDiffs == ["content", "mtime"])
+        #expect(events[0].triggerWhy == ["itemChangedRemotely", "contentUpdate"])
     }
 
     @Test
@@ -54,11 +55,38 @@ struct LiveLogParserTests {
         #expect(events[0].phase == .completed)
         #expect(events[0].primaryPath == oldPath)
     }
+
+    @Test
+    func emitsDirectoryRename() {
+        let oldPath = "/tmp/old-dir"
+        let newPath = "/tmp/new-dir"
+        let resolver = FakeResolver(
+            localDirectoryPaths: ["200": oldPath]
+        )
+        let parser = LiveLogParser(resolver: resolver)
+
+        _ = parser.feed(
+            line: #"[info] item changed <i:fileID(200) p:fileID(11111) n:"old-dir" dir child:0 m:rwx ct:1 mt:1>"#,
+            timestamp: .now
+        )
+
+        resolver.localDirectoryPaths["200"] = newPath
+        let events = parser.feed(
+            line: #"[info] itemUpdatedInFSSnapshot(from: Optional(<s:fileID(200) p:fileID(11111) n:"old-dir" dir child:1>), to: Optional(<s:fileID(200) p:fileID(11111) n:"new-dir" dir child:1>), diffs: filename)"#,
+            timestamp: .now
+        )
+
+        #expect(events.count == 1)
+        #expect(events[0].action == .renameDirectory)
+        #expect(events[0].primaryPath == oldPath)
+        #expect(events[0].secondaryPath == newPath)
+        #expect(events[0].triggerDiffs == ["filename"])
+    }
 }
 
 private final class FakeResolver: PathResolving {
     private let localPaths: [String: String]
-    private let localDirectoryPaths: [String: String]
+    var localDirectoryPaths: [String: String]
     private let documentPaths: [String: String]
     private let maskedPaths: [String: String]
     private let childPaths: [String: String]
