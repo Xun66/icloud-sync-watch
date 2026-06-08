@@ -71,3 +71,12 @@ make package VERSION=0.1.0
 - `APPLE_ID`
 - `APPLE_TEAM_ID`
 - `APPLE_APP_SPECIFIC_PASSWORD`
+
+## 说明
+
+- 目前只在 macOS 15.7 上做过测试。如果你在其他 macOS 版本上遇到兼容性或行为问题，欢迎提 issue。
+- 项目中包含在人工监督和修改下生成的 AI 代码。
+
+## English README
+
+英文说明见 [README.md](README.md)。

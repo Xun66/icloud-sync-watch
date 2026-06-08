@@ -71,3 +71,12 @@ If you later want notarization, you will need Apple credentials such as:
 - `APPLE_ID`
 - `APPLE_TEAM_ID`
 - `APPLE_APP_SPECIFIC_PASSWORD`
+
+## Notes
+
+- This project has only been tested on macOS 15.7 so far. If you run into version-specific issues on other macOS releases, please open an issue.
+- Parts of this project include AI-generated code reviewed and edited under human supervision.
+
+## Chinese README
+
+See [README.zh-CN.md](README.zh-CN.md).
