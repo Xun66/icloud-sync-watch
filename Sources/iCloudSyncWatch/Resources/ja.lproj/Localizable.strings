@@ -5,6 +5,7 @@
 "empty.monitoring.enabled" = "バックグラウンド監視は有効です";
 "empty.monitoring.disabled" = "ポップオーバーを開くと監視が開始されます";
 "record.view" = "ログファイルを表示";
+"button.clear" = "クリア";
 "menu.keepMonitoring" = "非表示中も監視を続ける";
 "menu.help" = "ヘルプ";
 "menu.help.incomplete" = "変更リストが不完全なのはなぜですか？";
@@ -12,8 +13,13 @@
 "menu.feedback" = "フィードバックを送る";
 "menu.about" = "このアプリについて";
 "menu.quit" = "終了";
+"menu.copyFullPath" = "フルパスをコピー";
 "tooltip.decodeFailure" = "マスク解除に失敗しました: %@";
 "detail.duration" = "所要時間 %@";
+"detail.operationLabel" = "操作:";
+"detail.diffsLabel" = "Diffs:";
+"detail.whyLabel" = "Why:";
+"detail.tokenSeparator" = " | ";
 "detail.triggerReasonLabel" = "発生理由:";
 "detail.unknownChange" = "変更内容 --";
 "monitor.paused" = "監視は %@ 停止";
@@ -31,6 +37,12 @@
 "error.launchFailedText" = "iCloud Sync Watch の起動に失敗しました: %@";
 "error.saveState" = "状態ファイルの保存に失敗しました: %@";
 "error.createLogFile" = "ログファイルの作成に失敗しました: %@";
+"error.invalidStateFile" = "状態ファイル %@ の %d 行目は現在のバージョンと互換性がありません: %@。削除するか、外部の移行/リセットスクリプトで修復してください。";
+"error.logStreamExited" = "`log stream` が異常終了しました。終了コード: %d";
+"error.logStreamExitedWithDetail" = "`log stream` が異常終了しました。終了コード %d: %@";
+"error.logStreamPermissionDenied" = "`log stream` は終了コード 77 で終了しました。macOS が unified log へのアクセスを拒否しました。フルディスクアクセスを付与して再試行してください。";
+"error.logStreamPermissionDeniedWithDetail" = "`log stream` は終了コード 77 で終了しました。macOS が unified log へのアクセスを拒否しました: %@";
+"error.logStreamStartFailed" = "`/usr/bin/log stream` の起動に失敗しました: %@";
 "action.upload" = "アップロード";
 "action.download" = "ダウンロード";
 "action.deleteFile" = "ファイル削除";

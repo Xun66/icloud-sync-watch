@@ -3,23 +3,11 @@ import Foundation
 enum L10n {
     private static let bundle: Bundle = {
         let bundleName = "iCloudSyncWatch_iCloudSyncWatch.bundle"
-        let releaseURL = Bundle.main.resourceURL?.appendingPathComponent(bundleName)
-        let localReleaseURL = URL(fileURLWithPath: "/Users/mindivelabs/code/icloud-sync-watch/.build/arm64-apple-macosx/release/\(bundleName)")
-        let localDebugURL = URL(fileURLWithPath: "/Users/mindivelabs/code/icloud-sync-watch/.build/arm64-apple-macosx/debug/\(bundleName)")
-
-        if let releaseURL, let bundle = Bundle(url: releaseURL) {
-            return bundle
+        let bundleURL = Bundle.main.resourceURL?.appendingPathComponent(bundleName)
+        guard let bundleURL, let bundle = Bundle(url: bundleURL) else {
+            Swift.fatalError("Could not load resource bundle at \(bundleURL?.path ?? "nil")")
         }
-
-        if let bundle = Bundle(url: localReleaseURL) {
-            return bundle
-        }
-
-        if let bundle = Bundle(url: localDebugURL) {
-            return bundle
-        }
-
-        return .main
+        return bundle
     }()
 
     static func tr(_ key: String) -> String {

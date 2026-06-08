@@ -202,6 +202,7 @@ final class LiveLogParser {
         fileOnly: Bool
     ) -> [ParsedSyncEvent] {
         var events: [ParsedSyncEvent] = []
+        let reasons = reasonDetails(for: action, line: line)
 
         if let startPath, matchesScope(path: startPath, fileOnly: fileOnly) {
             if stateMap[startPath] != .started {
@@ -214,7 +215,8 @@ final class LiveLogParser {
                         secondaryPath: nil,
                         fileSize: size,
                         decodeReason: decodeFailures[startPath],
-                        triggerReason: triggerReason(for: action, line: line),
+                        triggerDiffs: reasons.diffs,
+                        triggerWhy: reasons.why,
                         timestamp: timestamp
                     )
                 )
@@ -244,7 +246,8 @@ final class LiveLogParser {
                     secondaryPath: nil,
                     fileSize: size,
                     decodeReason: decodeFailures[endPath],
-                    triggerReason: triggerReason(for: action, line: line),
+                    triggerDiffs: reasons.diffs,
+                    triggerWhy: reasons.why,
                     timestamp: timestamp
                 )
             )
@@ -474,7 +477,8 @@ final class LiveLogParser {
                 secondaryPath: nil,
                 fileSize: nil,
                 decodeReason: nil,
-                triggerReason: diffs,
+                triggerDiffs: splitReasonTokens(diffs),
+                triggerWhy: [],
                 timestamp: timestamp
             )
         }
@@ -516,7 +520,8 @@ final class LiveLogParser {
                 secondaryPath: nil,
                 fileSize: nil,
                 decodeReason: nil,
-                triggerReason: diffs,
+                triggerDiffs: splitReasonTokens(diffs),
+                triggerWhy: [],
                 timestamp: timestamp
             )
         }
@@ -550,7 +555,8 @@ final class LiveLogParser {
                 secondaryPath: newPath,
                 fileSize: nil,
                 decodeReason: nil,
-                triggerReason: diffs,
+                triggerDiffs: splitReasonTokens(diffs),
+                triggerWhy: [],
                 timestamp: timestamp
             )
         }
@@ -562,7 +568,8 @@ final class LiveLogParser {
                 secondaryPath: newPath,
                 fileSize: nil,
                 decodeReason: nil,
-                triggerReason: diffs,
+                triggerDiffs: splitReasonTokens(diffs),
+                triggerWhy: [],
                 timestamp: timestamp
             )
         }
@@ -605,24 +612,31 @@ final class LiveLogParser {
         return nil
     }
 
-    private func triggerReason(for action: SyncAction, line: String) -> String? {
+    private func reasonDetails(for action: SyncAction, line: String) -> (diffs: [String], why: [String]) {
+        let diffsFromLine = splitReasonTokens(Patterns.diffs.firstMatch(in: line)?.first)
+        let whyFromLine = splitReasonTokens(Patterns.why.firstMatch(in: line)?.first)
+
         switch action {
         case .upload, .download:
-            if let why = Patterns.why.firstMatch(in: line)?.first {
-                return why
-            }
-            return Patterns.diffs.firstMatch(in: line)?.first
+            return (diffsFromLine, whyFromLine)
         case .deleteFile:
             if let deleteReason = Patterns.deleteStart.firstMatch(in: line), deleteReason.count > 1 {
-                return deleteReason[1]
+                return (splitReasonTokens(deleteReason[1]), whyFromLine)
             }
-            if let why = Patterns.why.firstMatch(in: line)?.first {
-                return why
-            }
-            return Patterns.diffs.firstMatch(in: line)?.first
+            return (diffsFromLine, whyFromLine)
         case .createDirectory, .deleteDirectory, .renameFile, .moveFile, .renameDirectory, .moveDirectory:
-            return Patterns.diffs.firstMatch(in: line)?.first ?? Patterns.why.firstMatch(in: line)?.first
+            return (diffsFromLine, whyFromLine)
         }
+    }
+
+    private func splitReasonTokens(_ reason: String?) -> [String] {
+        guard let reason else {
+            return []
+        }
+
+        return reason
+            .split(separator: "|", omittingEmptySubsequences: true)
+            .map(String.init)
     }
 }
 

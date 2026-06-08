@@ -63,6 +63,9 @@ final class StatusBarController: NSObject, NSPopoverDelegate {
             popover.performClose(nil)
         } else {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.contentViewController?.view.window?.makeKey()
+            popover.contentViewController?.view.window?.makeFirstResponder(popover.contentViewController?.view)
+            NSApp.activate(ignoringOtherApps: true)
             installPopoverDismissMonitors()
             onVisibilityChanged?(true)
         }

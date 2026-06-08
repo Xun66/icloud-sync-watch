@@ -5,6 +5,7 @@
 "empty.monitoring.enabled" = "Background monitoring is on";
 "empty.monitoring.disabled" = "Monitoring starts when the popover opens";
 "record.view" = "View log file";
+"button.clear" = "Clear";
 "menu.keepMonitoring" = "Keep monitoring while hidden";
 "menu.help" = "Help";
 "menu.help.incomplete" = "Why is the change list incomplete?";
@@ -12,8 +13,13 @@
 "menu.feedback" = "Send Feedback";
 "menu.about" = "About";
 "menu.quit" = "Quit";
+"menu.copyFullPath" = "Copy full path";
 "tooltip.decodeFailure" = "Unmasking failed: %@";
 "detail.duration" = "Duration %@";
+"detail.operationLabel" = "Operation:";
+"detail.diffsLabel" = "Diffs:";
+"detail.whyLabel" = "Why:";
+"detail.tokenSeparator" = ", ";
 "detail.triggerReasonLabel" = "Trigger reason:";
 "detail.unknownChange" = "Change details --";
 "monitor.paused" = "Monitoring paused for %@";
@@ -31,6 +37,12 @@
 "error.launchFailedText" = "iCloud Sync Watch launch failed: %@";
 "error.saveState" = "Failed to save state file: %@";
 "error.createLogFile" = "Failed to create log file: %@";
+"error.invalidStateFile" = "State file at %@ is incompatible on line %d: %@. Delete it or repair it with an external migration/reset script.";
+"error.logStreamExited" = "`log stream` exited unexpectedly with status %d";
+"error.logStreamExitedWithDetail" = "`log stream` exited unexpectedly with status %d: %@";
+"error.logStreamPermissionDenied" = "`log stream` exited with status 77. macOS denied access to the unified log. Grant Full Disk Access and try again.";
+"error.logStreamPermissionDeniedWithDetail" = "`log stream` exited with status 77. macOS denied access to the unified log: %@";
+"error.logStreamStartFailed" = "Failed to start `/usr/bin/log stream`: %@";
 "action.upload" = "Upload";
 "action.download" = "Download";
 "action.deleteFile" = "Delete File";

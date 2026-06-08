@@ -30,7 +30,7 @@
 - 仅支持原生 macOS app
 - 仅支持 live 监控
 - 不支持历史日志回放
-- 状态文件保存在 `~/Library/Application Support/labs.mindive.iCloudSyncWatch/state.jsonl`
+- 状态文件保存在 `~/Library/Application Support/io.github.xun66.iCloudSyncWatch/state.jsonl`
 
 如果关闭“隐藏后保持监控”，弹层隐藏时会暂停监控；再次展开时，时间线会插入一条分割线，显示暂停了多久。
 

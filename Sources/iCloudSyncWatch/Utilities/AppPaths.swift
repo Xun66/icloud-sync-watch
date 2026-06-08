@@ -1,7 +1,7 @@
 import Foundation
 
 enum AppPaths {
-    static let bundleIdentifier = "labs.mindive.iCloudSyncWatch"
+    static let bundleIdentifier = "io.github.xun66.iCloudSyncWatch"
     static var appName: String { L10n.tr("app.name") }
 
     static func snapshotFileURL() throws -> URL {

@@ -6,7 +6,7 @@ struct ActivityPopoverView: View {
     @Environment(\.colorScheme) private var colorScheme
     @ObservedObject var store: ActivityStore
 
-    @State private var expandedEntryIDs: Set<UUID> = []
+    @State private var expandedEntryID: UUID?
 
     private var menuActions: AppMenuActions {
         AppMenuActions(store: store)
@@ -32,14 +32,27 @@ struct ActivityPopoverView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(AppPaths.appName)
                     .font(.system(size: 15, weight: .semibold))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 Text(store.keepMonitoringWhileHidden ? L10n.tr("header.watchEnabled") : L10n.tr("header.watchDisabled"))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
 
-            settingsMenu
-                .padding(.top, 1)
+            HStack(spacing: 6) {
+                Button(L10n.tr("button.clear")) {
+                    expandedEntryID = nil
+                    store.clearEntries()
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.secondary)
+
+                settingsMenu
+            }
+            .fixedSize()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -92,9 +105,10 @@ struct ActivityPopoverView: View {
                             if let activity = entry.activity {
                                 ActivityRowView(
                                     activity: activity,
-                                    isExpanded: expandedEntryIDs.contains(activity.id),
+                                    isExpanded: expandedEntryID == activity.id,
                                     toggleExpanded: { toggleExpanded(activity.id) },
-                                    openParentDirectory: { openDirectory(path: activity.parentDirectoryPath) }
+                                    revealInFinder: { store.revealEntryInFinder(path: activity.displayPath) },
+                                    copyFullPath: { copyToPasteboard(activity.displayPath) }
                                 )
                             }
                         case .pause:
@@ -144,15 +158,16 @@ struct ActivityPopoverView: View {
     }
 
     private func toggleExpanded(_ id: UUID) {
-        if expandedEntryIDs.contains(id) {
-            expandedEntryIDs.remove(id)
+        if expandedEntryID == id {
+            expandedEntryID = nil
         } else {
-            expandedEntryIDs.insert(id)
+            expandedEntryID = id
         }
     }
 
-    private func openDirectory(path: String) {
-        NSWorkspace.shared.open(URL(fileURLWithPath: path))
+    private func copyToPasteboard(_ path: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(path, forType: .string)
     }
 
     private var containerBackgroundColor: Color {
@@ -212,7 +227,8 @@ private struct ActivityRowView: View {
     let activity: ActivityEntry
     let isExpanded: Bool
     let toggleExpanded: () -> Void
-    let openParentDirectory: () -> Void
+    let revealInFinder: () -> Void
+    let copyFullPath: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -229,7 +245,7 @@ private struct ActivityRowView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
 
-                    Button(action: openParentDirectory) {
+                    Button(action: revealInFinder) {
                         Text(activity.parentDirectoryName)
                             .font(.system(size: 10))
                             .foregroundStyle(.secondary)
@@ -268,15 +284,37 @@ private struct ActivityRowView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .top, spacing: 6) {
-                        Text(activity.action.detailTitle)
+                        Text(L10n.tr("detail.operationLabel"))
+                        Text(activity.action.displayTitle)
+                    }
+
+                    HStack(alignment: .top, spacing: 6) {
                         Text(L10n.tr("detail.duration", DateFormatting.durationText(activity.durationSeconds)))
                         Text(DateFormatting.fileSizeText(activity.fileSize))
                     }
 
-                    HStack(alignment: .top, spacing: 4) {
-                        Text(L10n.tr("detail.triggerReasonLabel"))
-                        Text(activity.triggerReason ?? L10n.tr("detail.unknownChange"))
+                    if !activity.triggerDiffs.isEmpty {
+                        HStack(alignment: .top, spacing: 4) {
+                            Text(L10n.tr("detail.diffsLabel"))
+                            Text(ReasonDisplayFormatter.format(activity.triggerDiffs))
+                                .textSelection(.enabled)
+                        }
+                    }
+
+                    if !activity.triggerWhy.isEmpty {
+                        HStack(alignment: .top, spacing: 4) {
+                            Text(L10n.tr("detail.whyLabel"))
+                            Text(ReasonDisplayFormatter.format(activity.triggerWhy))
+                                .textSelection(.enabled)
+                        }
+                    }
+
+                    if activity.triggerDiffs.isEmpty && activity.triggerWhy.isEmpty {
+                        HStack(alignment: .top, spacing: 4) {
+                            Text(L10n.tr("detail.triggerReasonLabel"))
+                            Text(L10n.tr("detail.unknownChange"))
                             .textSelection(.enabled)
+                        }
                     }
                 }
                 .font(.system(size: 10))
@@ -289,7 +327,16 @@ private struct ActivityRowView: View {
         }
         .background(currentBackgroundColor)
         .contentShape(Rectangle())
-        .onTapGesture(perform: toggleExpanded)
+        .contextMenu {
+            Button(L10n.tr("menu.copyFullPath")) {
+                copyFullPath()
+            }
+        }
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                toggleExpanded()
+            }
+        )
         .onHover { hovered in
             isHovered = hovered
         }
@@ -330,6 +377,7 @@ private struct ActivityRowView: View {
 }
 
 private struct WarningIconView: View {
+    @State private var isHovering = false
     let message: String
 
     var body: some View {
@@ -338,8 +386,17 @@ private struct WarningIconView: View {
             .foregroundStyle(.yellow)
             .frame(width: 12, height: 12)
             .contentShape(Rectangle())
-            .help(message)
             .accessibilityLabel(message)
+            .onHover { hovered in
+                isHovering = hovered
+            }
+            .popover(isPresented: $isHovering, arrowEdge: .bottom) {
+                Text(message)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.primary)
+                    .padding(10)
+                    .frame(width: 220, alignment: .leading)
+            }
     }
 }
 

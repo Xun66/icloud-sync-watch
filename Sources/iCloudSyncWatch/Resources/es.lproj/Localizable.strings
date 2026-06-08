@@ -5,6 +5,7 @@
 "empty.monitoring.enabled" = "La supervisión en segundo plano está activada";
 "empty.monitoring.disabled" = "La supervisión empieza al abrir el panel";
 "record.view" = "Ver archivo de registro";
+"button.clear" = "Limpiar";
 "menu.keepMonitoring" = "Seguir supervisando al ocultar";
 "menu.help" = "Ayuda";
 "menu.help.incomplete" = "¿Por qué la lista de cambios está incompleta?";
@@ -12,8 +13,13 @@
 "menu.feedback" = "Enviar comentarios";
 "menu.about" = "Acerca de";
 "menu.quit" = "Salir";
+"menu.copyFullPath" = "Copiar la ruta completa";
 "tooltip.decodeFailure" = "Error al desofuscar el nombre: %@";
 "detail.duration" = "Duración %@";
+"detail.operationLabel" = "Operación:";
+"detail.diffsLabel" = "Diffs:";
+"detail.whyLabel" = "Why:";
+"detail.tokenSeparator" = " | ";
 "detail.triggerReasonLabel" = "Motivo del cambio:";
 "detail.unknownChange" = "Detalles del cambio --";
 "monitor.paused" = "Supervisión en pausa durante %@";
@@ -31,6 +37,12 @@
 "error.launchFailedText" = "Error al iniciar iCloud Sync Watch: %@";
 "error.saveState" = "No se pudo guardar el archivo de estado: %@";
 "error.createLogFile" = "No se pudo crear el archivo de registro: %@";
+"error.invalidStateFile" = "El archivo de estado %@ es incompatible en la línea %d: %@. Elimínalo o repáralo con un script externo de migración/restablecimiento.";
+"error.logStreamExited" = "`log stream` finalizó inesperadamente con el código %d";
+"error.logStreamExitedWithDetail" = "`log stream` finalizó inesperadamente con el código %d: %@";
+"error.logStreamPermissionDenied" = "`log stream` terminó con el código 77. macOS denegó el acceso al registro unificado. Concede Acceso total al disco y vuelve a intentarlo.";
+"error.logStreamPermissionDeniedWithDetail" = "`log stream` terminó con el código 77. macOS denegó el acceso al registro unificado: %@";
+"error.logStreamStartFailed" = "No se pudo iniciar `/usr/bin/log stream`: %@";
 "action.upload" = "Subida";
 "action.download" = "Descarga";
 "action.deleteFile" = "Eliminar archivo";
